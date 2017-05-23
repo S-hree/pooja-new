@@ -1,0 +1,349 @@
+AUTOTALKS-NAV-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Counter32
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    TruthValue, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    InetPortNumber, InetAddressType, InetAddressIPv4
+        FROM INET-ADDRESS-MIB
+    atlkMgmt
+        FROM AUTOTALKS-REG
+    ConfigSaveStatus, AntennaStatus
+        FROM AUTOTALKS-TC
+;
+
+navMib MODULE-IDENTITY
+    LAST-UPDATED "201605220000Z"
+    ORGANIZATION "Autotalks"
+    CONTACT-INFO "Grand Netter Building
+                  POB 3846, Kfar-Netter 40593, Israel
+                  Phone: (+972)-9-886-5300
+                  Fax:   (+972)-9-886-5301
+                  info@auto-talks.com"
+    DESCRIPTION  "Navigation MIB."
+    REVISION     "201605220000Z"
+    DESCRIPTION  "Added navGnssAntennaOffsetX, navGnssAntennaOffsetY, 
+                  navGnssAntennaOffsetZ, navGnssRxNmeaSentencesErrorCnt,
+                  navGnssTxNmeaSentencesErrorCnt and navSysTimeAccuracy
+                  attributes."
+    REVISION     "201605090000Z"
+    DESCRIPTION  "Added navGnssAntennaStatus attribute."
+    REVISION     "201603230000Z"
+    DESCRIPTION  "Added navSysTimePpsCnt attribute."
+    REVISION     "201602020000Z"
+    DESCRIPTION  "Added navGnssRxBytesCnt, navGnssRxNmeaSentencesCnt,
+                  navGnssTxBytesCnt and navGnssTxNmeaSentencesCnt attributes."
+    REVISION     "201511260000Z"
+    DESCRIPTION  "Added navGpsSatelliteCnt, navGlonassSatelliteCnt attributes."
+    REVISION     "201509070000Z"
+    DESCRIPTION  "Added navGnssInputDeviceIndex attribute."
+    REVISION     "201507160000Z"
+    DESCRIPTION  "Added navConfigSaveStatus attribute."
+    REVISION     "201505050000Z"
+    DESCRIPTION  "Made navSysTimeStatus a read-write attribute."
+    REVISION     "201505030000Z"
+    DESCRIPTION  "Added navSysTimeUpdateEnabled, navSysTimePpsSyncEnabled,
+                  navSysTimeStatus and navSysTimeLeapSeconds attributes. Made
+                  navFixAvailable a read-write attribute."
+    REVISION     "201503080000Z"
+    DESCRIPTION  "Made navDataSource a read-write attribute, add the `none`
+                  navigation data source."
+    REVISION     "201503040000Z"
+    DESCRIPTION  "Added navDataSource, navGpsdServerPort,
+                  navGpsdServerIpAddressType and navGpsdServerIpAddressIPv4
+                  attributes."
+    REVISION     "201304210000Z"
+    DESCRIPTION  "Initial revision."
+    ::= { atlkMgmt 6 }
+
+--
+-- Textual Conventions
+--
+
+NavGnssDeviceIndex ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "d"
+    STATUS        current
+    DESCRIPTION
+        "A unique value, greater than zero, for each GNSS device index."
+    SYNTAX        Integer32 (1..65535)
+
+--
+-- Fix status
+--
+
+navFixAvailable OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether a navigation fix is available (via satellite navigation and/or
+        another method)."
+    ::= { navMib 2 }
+
+navDataSource OBJECT-TYPE
+    SYNTAX        INTEGER { gnss(0), gpsd(1), none(2) }
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Source of navigation data fix."
+    ::= { navMib 3 }
+
+navGpsdServerPort OBJECT-TYPE
+    SYNTAX        InetPortNumber
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Port number used by GPSD server."
+    ::= { navMib 4 }
+
+navGpsdServerIpAddressType OBJECT-TYPE
+    SYNTAX        InetAddressType
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Address type used by GPSD server."
+    ::= { navMib 5 }
+
+navGpsdServerIpAddressIPv4 OBJECT-TYPE
+    SYNTAX        InetAddressIPv4
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "IPv4 address used by GPSD server."
+    ::= { navMib 6 }
+
+navSysTime OBJECT IDENTIFIER ::= { navMib 7 }
+
+navConfigSaveStatus  OBJECT-TYPE
+    SYNTAX        ConfigSaveStatus
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Navigation MIB configuration save status."
+    ::= { navMib 8 }
+
+navGnssInputDeviceIndex OBJECT-TYPE
+    SYNTAX        NavGnssDeviceIndex
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Index of currently selected GNSS input device."
+    ::= { navMib 9 }
+
+navFixQualityInfo OBJECT IDENTIFIER ::= { navMib 10 }
+
+navGpsSatelliteCnt  OBJECT-TYPE
+    SYNTAX        Unsigned32 (0..255)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Number of GPS satellites in view."
+    ::= { navFixQualityInfo 1 }
+
+navGlonassSatelliteCnt  OBJECT-TYPE
+    SYNTAX        Unsigned32 (0..255)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Number of GLONASS satellites in view."
+    ::= { navFixQualityInfo 2 }
+
+navSysTimeUpdateEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether updating system time from navigation fix is enabled."
+    ::= { navSysTime 1 }
+
+navSysTimePpsSyncEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether syncing system time with external 1-PPS is enabled."
+    ::= { navSysTime 2 }
+
+navSysTimeStatus OBJECT-TYPE
+    SYNTAX        INTEGER { notSet(0), set(1) }
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "System time status."
+    ::= { navSysTime 3 }
+
+navSysTimeLeapSeconds OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Net amount of UTC leap seconds, between 2004-01-01T00:00:00Z and
+        current time, which shall be used in conversion between TAI and UTC
+        times in set/gettimeofday function calls."
+    ::= { navSysTime 4 }
+
+navSysTimePpsCnt OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "This counter shall be incremented after each pulse of
+        the pulse-per-second (PPS) signal."
+    ::= { navSysTime 5 }
+
+navSysTimeAccuracy OBJECT-TYPE
+    SYNTAX        INTEGER { milliSec1(41), second1(47), 
+        second10(48), secondGreater10(49), notKnown(254) }
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "System time accuracy.
+        
+        -- 41: The time is accurate to within 1 ms
+        -- 48: The time is accurate to within 1 s
+        -- 48: The time is accurate to within 10 s
+        -- 49: The time is accurate to within > 10 s
+        -- 254: Default indicating unknown"
+    ::= { navSysTime 6 }
+
+navGnssRxTx OBJECT IDENTIFIER ::= { navMib 11 }
+
+navGnssRxBytesCnt  OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Count of bytes read via NMEA I/O."
+    ::= { navGnssRxTx 1 }
+
+navGnssRxNmeaSentencesCnt  OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Count of valid NMEA sentences read via NMEA I/O."
+    ::= { navGnssRxTx 2 }
+
+navGnssTxBytesCnt  OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Count of bytes written via NMEA I/O."
+    ::= { navGnssRxTx 3 }
+
+navGnssTxNmeaSentencesCnt  OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Count of valid NMEA sentences written via NMEA I/O."
+    ::= { navGnssRxTx 4 }
+
+navGnssRxNmeaSentencesErrorCnt  OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Count of invalid NMEA sentences dropped at NMEA I/O before being
+        parsed."
+    ::= { navGnssRxTx 5 }
+
+navGnssTxNmeaSentencesErrorCnt  OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Count of invalid NMEA sentences dropped at NMEA I/O before being
+        written."
+    ::= { navGnssRxTx 6 }
+
+navGnssAntennaStatus OBJECT-TYPE
+    SYNTAX        AntennaStatus
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Current status of GNSS antenna."
+    ::= { navMib 12 }
+
+navGnssAntennaOffset OBJECT IDENTIFIER ::= { navMib 13 }
+
+navGnssAntennaOffsetX OBJECT-TYPE
+    SYNTAX        Integer32
+    UNITS         "cm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Antenna offset on axis X in centimeters, relative to vehicles
+        position reference. Axis X is positive towards vehicles front."
+    ::= { navGnssAntennaOffset 1 }
+
+navGnssAntennaOffsetY OBJECT-TYPE
+    SYNTAX        Integer32
+    UNITS         "cm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Antenna offset on axis Y in centimeters, relative to vehicles
+        position reference. Axis Y is positive towards vehicles right
+        hand side."
+    ::= { navGnssAntennaOffset 2 }
+
+navGnssAntennaOffsetZ OBJECT-TYPE
+    SYNTAX        Integer32
+    UNITS         "cm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Antenna offset on axis Z in centimeters, relative to vehicles
+        position reference. Axis Z is positive towards ground (i.e. down)."
+    ::= { navGnssAntennaOffset 3 }
+
+navConformance OBJECT IDENTIFIER ::= { navMib 1 }
+navGroups      OBJECT IDENTIFIER ::= { navConformance 1 }
+navCompliances OBJECT IDENTIFIER ::= { navConformance 2 }
+
+navCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "Compliance statement covering entire AUTOTALKS-NAV-MIB."
+    MODULE
+           MANDATORY-GROUPS { navMibGroup }
+    ::= { navCompliances 1 }
+
+navMibGroup OBJECT-GROUP
+    OBJECTS {
+        navFixAvailable,
+        navDataSource,
+        navGpsdServerPort,
+        navGpsdServerIpAddressType,
+        navGpsdServerIpAddressIPv4,
+        navSysTimeUpdateEnabled,
+        navSysTimePpsSyncEnabled,
+        navSysTimeStatus,
+        navSysTimeLeapSeconds,
+        navSysTimePpsCnt,
+        navSysTimeAccuracy,
+        navConfigSaveStatus,
+        navGnssInputDeviceIndex,
+        navGpsSatelliteCnt,
+        navGlonassSatelliteCnt,
+        navGnssRxBytesCnt,
+        navGnssRxNmeaSentencesCnt,
+        navGnssTxBytesCnt,
+        navGnssTxNmeaSentencesCnt,
+        navGnssRxNmeaSentencesErrorCnt,
+        navGnssTxNmeaSentencesErrorCnt,
+        navGnssAntennaStatus,
+        navGnssAntennaOffsetX,
+        navGnssAntennaOffsetY,
+        navGnssAntennaOffsetZ }
+    STATUS current
+    DESCRIPTION
+        "All objects in AUTOTALKS-NAV-MIB."
+    ::= { navGroups 1 }
+
+END

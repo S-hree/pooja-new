@@ -1,0 +1,54 @@
+AUTOTALKS-TC DEFINITIONS ::= BEGIN
+
+IMPORTS
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    MODULE-IDENTITY, Counter64
+        FROM SNMPv2-SMI
+    autotalks
+        FROM AUTOTALKS-REG
+;
+
+atlkTc MODULE-IDENTITY
+    LAST-UPDATED "201607140000Z"
+    ORGANIZATION "Autotalks"
+    CONTACT-INFO "Grand Netter Building
+                  POB 3846, Kfar-Netter 40593, Israel
+                  Phone: (+972)-9-886-5300
+                  Fax:   (+972)-9-886-5301
+                  info@auto-talks.com"
+    DESCRIPTION  "Autotalks textual convention module."
+    REVISION     "201607140000Z"    
+    DESCRIPTION  "Changed LinkProtocolId syntax."
+    REVISION     "201605090000Z"    
+    DESCRIPTION  "Autotalks textual antenna statuses."
+    REVISION     "201508040000Z"
+    DESCRIPTION  "Added saveError and notSupported to ConfigSaveStatus."
+    REVISION     "201507060000Z"
+    DESCRIPTION  "Added LinkProtocolId."
+    REVISION     "201406180000Z"
+    DESCRIPTION  "Initial revision."
+    ::= { autotalks 2 }
+
+ConfigSaveStatus ::= TEXTUAL-CONVENTION
+    STATUS        current
+    DESCRIPTION   "Configuration save status."
+    SYNTAX        INTEGER {
+        upToDate(0), notUpToDate(1), save(2), saveInProgress(3),
+        saveError(4), notSupported(5) }
+
+LinkProtocolId ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "1x:"
+    STATUS        current
+    DESCRIPTION   "40-bit IEEE 802 SNAP protocol ID or IEEE 802.11 VSA OUI.
+                  Includes the range of EtherTypes as 0..65535."
+    SYNTAX        Counter64 (0..1099511627775)
+
+AntennaStatus ::= TEXTUAL-CONVENTION
+    STATUS        current
+    DESCRIPTION   "Antenna status."
+    SYNTAX        INTEGER {
+        notSupported(0), connected(1), notConnected(2), shorted(3),
+        error(4) }
+
+END

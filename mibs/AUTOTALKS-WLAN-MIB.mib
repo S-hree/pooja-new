@@ -1,0 +1,1302 @@
+AUTOTALKS-WLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Counter32,
+    Integer32, Unsigned32
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    MacAddress, TruthValue, TEXTUAL-CONVENTION, RowStatus
+        FROM SNMPv2-TC
+    ifIndex, InterfaceIndex
+        FROM IF-MIB
+    atlkMgmt
+        FROM AUTOTALKS-REG
+    ConfigSaveStatus, AntennaStatus
+        FROM AUTOTALKS-TC
+;
+
+wlanMib MODULE-IDENTITY
+    LAST-UPDATED "201605090000Z"
+    ORGANIZATION "Autotalks"
+    CONTACT-INFO "Grand Netter Building
+                  POB 3846, Kfar-Netter 40593, Israel
+                  Phone: (+972)-9-886-5300
+                  Fax:   (+972)-9-886-5301
+                  info@auto-talks.com" 
+    DESCRIPTION  "CRATON WLAN MIB definition."
+    REVISION     "201605090000Z"
+    DESCRIPTION  "Added wlanAntennaStatus attribute."
+    REVISION     "201603140000Z"
+    DESCRIPTION  "Extended wlanFrequency range to include 700MHz band."
+    REVISION     "201603130000Z"      
+    DESCRIPTION  "Added wlanPhyHeaderErrCnt and wlanRcpiLatestFrame attributes."
+    REVISION     "201512130000Z"
+    DESCRIPTION  "Added wlanQosDataEnabled and wlanBssid attributes."
+    REVISION     "201510130000Z"
+    DESCRIPTION  "Added wlanRfCalibrationRequired attribute."
+    REVISION     "201510120000Z"
+    DESCRIPTION  "Changed status of wlanPresetFrequency0 and
+                  wlanPresetFrequency1 to deprecated."
+    REVISION     "201508100000Z"
+    DESCRIPTION  "Changed range of wlanPantLutDbm8 attribute."
+    REVISION     "201507280000Z"
+    DESCRIPTION  "Changed the status of wlanTssiPintercept and wlanTssiPslope
+                  attributes to obsolete."
+    REVISION     "201507220000Z"
+    DESCRIPTION  "Added wlanPantLutDbm8Table, changed the status of
+                  wlanPantLutTable to deprecated."
+    REVISION     "201507210000Z"
+    DESCRIPTION  "Added wlanCsTable."
+    REVISION     "201507160000Z"
+    DESCRIPTION  "Changed max-access of wlanTxIqImbalanceAmplitude and
+                  wlanTxIqImbalancePhase to read-write."
+    REVISION     "201507130000Z"
+    DESCRIPTION  "Added wlanLoLeakageTable."
+    REVISION     "201506220000Z"
+    DESCRIPTION  "Added WlanPantLut textual convention, used in wlanPantLut
+                  MIB attribute."
+    REVISION     "201506110000Z"
+    DESCRIPTION  "Added wlanRficTemperature attribute."
+    REVISION     "201506090000Z"
+    DESCRIPTION  "Added wlanEdcaCWmin and wlanEdcaCWmax attributes."
+    REVISION     "201503030000Z"
+    DESCRIPTION  "Added wlanShortRetryLimit attribute."
+    REVISION     "201501140000Z"
+    DESCRIPTION  "Added wlanRxDuplicateFrameFilteringEnabled attribute."
+    REVISION     "201412220000Z"
+    DESCRIPTION  "Added wlanTxSaOverrideEnabled and wlanRxUcastDaFilterEnabled
+                  attributes."
+    REVISION     "201410270000Z"
+    DESCRIPTION  "Added wlanTxFailCnt, wlanTxAllocFailCnt, wlanTxQueueFailCnt,
+                  wlanRxFailCnt, wlanRxAllocFailCnt, wlanRxQueueFailCnt and
+                  wlanTssiDetectorReading attributes."
+    REVISION     "201410260000Z"
+    DESCRIPTION  "Added wlanChannelProbingInterval, wlanChannelLoadThreshold,
+                  wlanChannelBusyRatio and wlanRssiLatestFrame attributes."
+    REVISION     "201406180000Z"
+    DESCRIPTION  "Added wlanConfigSaveStatus, wlanPantLutIndex and
+                  wlanPantLut attributes."
+    REVISION     "201405130000Z"
+    DESCRIPTION  "Added wlanPresetFrequency0, wlanPresetFrequency1 and
+                  wlanDcocEnabled attributes."
+    REVISION     "201404300000Z"
+    DESCRIPTION  "Added wlanPhyOFDMChannelWidth attribute."
+    REVISION     "201403110000Z"
+    DESCRIPTION  "Added wlanMacAddress attribute."
+    REVISION     "201402100000Z"
+    DESCRIPTION  "Added wlanRfFrontEndOffset, wlanRxSampleGainLow,
+                  wlanRxSampleGainMid, wlanRxSampleGainHigh,
+                  wlanGrfiSignalDelayResolution, wlanRxIqImbalanceAmplitude,
+                  wlanRxIqImbalancePhase, wlanTxIqImbalanceAmplitude and
+                  wlanTxIqImbalancePhase attributes."
+    REVISION     "201402060000Z"
+    DESCRIPTION  "Added wlanRfEnabled attribute."
+    REVISION     "201312180000Z"
+    DESCRIPTION  "Added wlanTssiInterval attribute."
+    REVISION     "201312040000Z"
+    DESCRIPTION  "Added wlanTssiPintercept and wlanTssiPslope attributes."
+    REVISION     "201304210000Z"
+    DESCRIPTION  "Added wlanRfFrontEndConnected attribute."
+    REVISION     "201206240000Z"
+    DESCRIPTION  "Added conformance definitions."
+    REVISION     "201205140000Z"
+    DESCRIPTION  "Initial revision."
+    ::= { atlkMgmt 1 }
+
+--
+-- Textual Conventions
+--
+
+WlanRfIndex ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "d"
+    STATUS        current
+    DESCRIPTION
+        "A unique value, greater than zero, for each RF interface."
+    SYNTAX        Integer32 (1..255)
+
+WlanLoLeakageIndex ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "d"
+    STATUS        current
+    DESCRIPTION
+        "A unique value, greater than zero, for each row in the LO leakage
+        cancellation table.
+
+        A RF interface's gain level (GL) index in the table can be
+        calculated via:
+
+        index = if_index * 16 + GL - 15
+
+        Gain levels are in the range 0..15."
+    SYNTAX        Integer32 (1..4080)
+
+WlanEdcaIndex ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "d"
+    STATUS        current
+    DESCRIPTION
+        "A unique value, greater than zero, for each row in the EDCA table.
+
+        A MAC interface's Access Category (AC) index in the table can be
+        calculated via:
+
+        index = if_index * 4 + AC - 3
+
+        0 -- AC_BE
+        1 -- AC_BK
+        2 -- AC_VI
+        3 -- AC_VO"
+    SYNTAX        Integer32 (1..1020)
+
+WlanPantLutDbm8Index ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "d"
+    STATUS        current
+	DESCRIPTION
+        "A unique value, greater than zero, for each row in the power antenna
+        lookup table (LUT).
+
+        A power antenna LUT's conversion factor (CF) index in the table can be
+        calculated via:
+
+        index = lut_index * 256 + CF - 255
+
+        Conversion factor is in the range 0..255."
+    SYNTAX        Integer32 (1..1024)
+
+WlanPantLut ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "1500a"
+    STATUS        deprecated
+    DESCRIPTION
+        "ASCII encoded lookup table (LUT) for conversion of power detector
+        output into 1 dBm."
+    SYNTAX        OCTET STRING (SIZE(512..1500))
+
+--
+--
+--
+wlanSmt          OBJECT IDENTIFIER ::= { wlanMib 2 }
+wlanMac          OBJECT IDENTIFIER ::= { wlanMib 3 }
+wlanPhy          OBJECT IDENTIFIER ::= { wlanMib 4 }
+wlanRf           OBJECT IDENTIFIER ::= { wlanMib 5 }
+
+--
+-- wlanSmt
+--
+
+wlanConfigSaveStatus  OBJECT-TYPE
+    SYNTAX        ConfigSaveStatus
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "WLAN configuration save status."
+    ::= { wlanSmt 1 }
+
+--
+-- wlanMacTable
+--
+
+wlanMacTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF WlanMacEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "MAC interfaces configuration table."
+    ::= { wlanMac 1 }
+
+wlanMacEntry OBJECT-TYPE
+    SYNTAX        WlanMacEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "MAC interfaces configuration entry."
+    INDEX         { ifIndex }
+    ::= { wlanMacTable 1 }
+
+WlanMacEntry  ::=
+    SEQUENCE {
+        wlanDefaultTxDataRate Integer32,
+        wlanDefaultTxPower Integer32,
+        wlanRandomBackoffEnabled TruthValue,
+        wlanMacAddress MacAddress,
+        wlanTxSaOverrideEnabled TruthValue,
+        wlanRxUcastDaFilterEnabled TruthValue,
+        wlanShortRetryLimit Integer32,
+        wlanDefaultTxPowerDbm8 Integer32,
+        wlanQosDataEnabled TruthValue,
+        wlanBssid MacAddress }
+
+wlanDefaultTxDataRate  OBJECT-TYPE
+    SYNTAX        Integer32 (6..108)
+    UNITS         "500 kbit/s"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Default transmission data rate."
+    ::= { wlanMacEntry 1 }
+
+wlanDefaultTxPower OBJECT-TYPE
+    SYNTAX        Integer32 (-30..33)
+    UNITS         "dBm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Default transmission power."
+    ::= { wlanMacEntry 2 }
+
+wlanRandomBackoffEnabled OBJECT-TYPE
+    SYNTAX         TruthValue
+    MAX-ACCESS     read-write
+    STATUS         current
+    DESCRIPTION
+        "Whether MAC transmission random backoff is enabled."
+    ::= { wlanMacEntry 3 }
+
+wlanMacAddress OBJECT-TYPE
+    SYNTAX         MacAddress
+    MAX-ACCESS     read-write
+    STATUS         current
+    DESCRIPTION
+        "802.11 MAC Address.
+
+        Please note that MAC frame queues are not flushed when the address
+        is changed, meaning that the previous address value may appear as
+        outgoing frame source address or incoming destination address (in the
+        case of unicast frames) some time after the change."
+    ::= { wlanMacEntry 4 }
+
+wlanTxSaOverrideEnabled OBJECT-TYPE
+    SYNTAX         TruthValue
+    MAX-ACCESS     read-write
+    STATUS         current
+    DESCRIPTION
+        "Whether source address override is enabled.
+
+        If enabled, source MAC address (SA) can be set arbitrarily per frame
+        transmission by upper layer, without changing wlanMacAddress."
+    ::= { wlanMacEntry 5 }
+
+wlanRxUcastDaFilterEnabled OBJECT-TYPE
+    SYNTAX         TruthValue
+    MAX-ACCESS     read-write
+    STATUS         current
+    DESCRIPTION
+        "Whether unicast destination address filter is enabled.
+
+        If enabled, MAC will drop unicast frames which have destination
+        MAC address different from the receiving station MAC address."
+    ::= { wlanMacEntry 6 }
+
+wlanShortRetryLimit  OBJECT-TYPE
+    SYNTAX Integer32 (1..255)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "This attribute indicates the maximum number of transmission attempts
+        of a frame, the length of which is less than or equal to RTSThreshold,
+        that is made before a failure condition is indicated."
+    ::= { wlanMacEntry 7 }
+
+wlanDefaultTxPowerDbm8 OBJECT-TYPE
+    SYNTAX        Integer32 (-240..264)
+    UNITS         "1/8 dBm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Default transmission power in 1/8 dBm."
+    ::= { wlanMacEntry 8 }
+
+wlanQosDataEnabled OBJECT-TYPE
+    SYNTAX         TruthValue
+    MAX-ACCESS     read-write
+    STATUS         current
+    DESCRIPTION
+        "Whether 802.11 QoS data is enabled."
+    ::= { wlanMacEntry 9 }
+
+wlanBssid  OBJECT-TYPE
+    SYNTAX         MacAddress
+    MAX-ACCESS     read-write
+    STATUS         current
+    DESCRIPTION
+        "802.11 BSSID address."
+    ::= { wlanMacEntry 10 }
+
+--
+-- wlanMacCntTable
+--
+
+wlanMacCntTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF WlanMacCntEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "MAC counters table."
+     ::= { wlanMac 2 }
+
+wlanMacCntEntry OBJECT-TYPE
+     SYNTAX        WlanMacCntEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "MAC counters entry."
+     INDEX         { ifIndex }
+     ::= { wlanMacCntTable 1 }
+
+WlanMacCntEntry  ::=
+     SEQUENCE {
+         wlanFrameTxCnt Counter32,
+         wlanFrameRxCnt Counter32,
+         wlanTxFailCnt Counter32,
+         wlanTxAllocFailCnt Counter32,
+         wlanTxQueueFailCnt Counter32,
+         wlanRxFailCnt Counter32,
+         wlanRxAllocFailCnt Counter32,
+         wlanRxQueueFailCnt Counter32 }
+
+wlanFrameTxCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each transmitted frame."
+     ::= { wlanMacCntEntry 1 }
+
+wlanFrameRxCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each correctly received frame."
+     ::= { wlanMacCntEntry 2 }
+
+wlanTxFailCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each failure during frame
+         transmission."
+     ::= { wlanMacCntEntry 3 }
+
+wlanTxAllocFailCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each memory allocation failure
+         during frame transmission."
+     ::= { wlanMacCntEntry 4 }
+
+wlanTxQueueFailCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each queuing failure during
+         frame transmission."
+     ::= { wlanMacCntEntry 5 }
+
+wlanRxFailCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each failure during frame
+         receival."
+     ::= { wlanMacCntEntry 6 }
+
+wlanRxAllocFailCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each memory allocation failure
+         during frame receival."
+     ::= { wlanMacCntEntry 7 }
+
+wlanRxQueueFailCnt OBJECT-TYPE
+     SYNTAX        Counter32
+     MAX-ACCESS    read-only
+     STATUS        current
+     DESCRIPTION
+         "This counter shall be incremented for each queuing failure during
+         frame receival."
+     ::= { wlanMacCntEntry 8 }
+
+--
+-- Mac Diversity
+--
+
+wlanMacDiversity          OBJECT IDENTIFIER ::= { wlanMac 3 }
+
+--
+-- wlanMacRxDiversity scalars
+--
+
+wlanRxDuplicateFrameFilteringEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether MAC duplicate frame filtering is enabled in RX diversity mode."
+    ::= { wlanMacDiversity 1 }
+
+--
+-- wlanEdcaTable
+--
+wlanEdcaTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF WlanEdcaEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "EDCA configuration table."
+     ::= { wlanMac 4 }
+
+wlanEdcaEntry OBJECT-TYPE
+    SYNTAX        WlanEdcaEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "EDCA configuration entry."
+    INDEX         { wlanEdcaIndex }
+    ::= { wlanEdcaTable 1 }
+
+WlanEdcaEntry  ::=
+    SEQUENCE {
+        wlanEdcaIndex WlanEdcaIndex,
+        wlanEdcaCWmin Unsigned32,
+        wlanEdcaCWmax Unsigned32 }
+
+wlanEdcaIndex OBJECT-TYPE
+    SYNTAX        WlanEdcaIndex
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Identifies row of EDCA table."
+    ::= { wlanEdcaEntry 1 }
+
+wlanEdcaCWmin OBJECT-TYPE
+    SYNTAX Unsigned32 (0..255)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "The minimum size of the window that is used for generating a random
+        number for the backoff.
+
+        The value of this attribute is such that it could always be expressed
+        in the form of 2**X - 1, where X is an integer."
+    ::= { wlanEdcaEntry 2 }
+
+wlanEdcaCWmax OBJECT-TYPE
+    SYNTAX Unsigned32 (0..65535)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "The maximum size of the window that is used for generating a random
+        number for the backoff.
+
+        The value of this attribute is such that it could always be expressed
+        in the form of 2**X - 1, where X is an integer."
+    ::= { wlanEdcaEntry 3 }
+
+--
+-- wlanCsTable
+--
+
+wlanCsTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF WlanCsEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "IEEE 1609.4 channel switching table."
+     ::= { wlanMac 5 }
+
+wlanCsEntry OBJECT-TYPE
+    SYNTAX        WlanCsEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Channel switching table entry."
+    INDEX         { ifIndex }
+    ::= { wlanCsTable 1 }
+
+WlanCsEntry  ::=
+    SEQUENCE {
+        wlanCsRowStatus RowStatus,
+        wlanCsFrequencyA Integer32,
+        wlanCsFrequencyB Integer32,
+        wlanCsIntervalA Integer32,
+        wlanCsIntervalB Integer32,
+        wlanCsSyncTolerance Integer32,
+        wlanCsIfIndexB InterfaceIndex }
+
+--
+-- Channel switching status
+--
+wlanCsRowStatus OBJECT-TYPE
+    SYNTAX        RowStatus
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Channel switching row status:
+
+         active -- Channel switching is enabled.
+         notInService -- Channel switching is disabled.
+         notReady -- Indicates presence of invalid row attribute."
+    ::= { wlanCsEntry 1 }
+
+wlanCsFrequencyA OBJECT-TYPE
+    SYNTAX        Integer32 (5180..5930)
+    UNITS         "MHz"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Channel A frequency.
+
+        Should be set when wlanCsRowStatus is set to notInService."
+    ::= { wlanCsEntry 2 }
+
+wlanCsFrequencyB OBJECT-TYPE
+    SYNTAX        Integer32 (5180..5930)
+    UNITS         "MHz"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Channel B frequency.
+
+        Should be set when wlanCsRowStatus is set to notInService."
+    ::= { wlanCsEntry 3 }
+
+wlanCsIntervalA OBJECT-TYPE
+    SYNTAX        Integer32 (0..255)
+    UNITS         "millisecond"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Channel A interval."
+    DEFVAL { 50 }
+    ::= { wlanCsEntry 4 }
+
+wlanCsIntervalB OBJECT-TYPE
+    SYNTAX        Integer32 (0..255)
+    UNITS         "millisecond"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Channel B interval."
+    DEFVAL { 50 }
+    ::= { wlanCsEntry 5 }
+
+wlanCsSyncTolerance OBJECT-TYPE
+    SYNTAX        Integer32 (0..255)
+    UNITS         "milliseconds"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "This attribute is equivalent to SyncTolerance as defined in IEEE
+        1609.4-2010 clause 6.2.5."
+    DEFVAL { 2 }
+    ::= { wlanCsEntry 6 }
+
+wlanCsIfIndexB OBJECT-TYPE
+    SYNTAX        InterfaceIndex
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Interface index used for channel B."
+    ::= { wlanCsEntry 7 }
+
+--
+-- Diversity
+--
+
+wlanTxDiversity          OBJECT IDENTIFIER ::= { wlanPhy 1 }
+wlanRxDiversity          OBJECT IDENTIFIER ::= { wlanPhy 2 }
+
+--
+-- wlanTxDiversity scalars
+--
+
+wlanTxDiversityEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether TX diversity is enabled."
+    ::= { wlanTxDiversity 1 }
+
+wlanTxCsd OBJECT-TYPE
+    SYNTAX        Integer32 (0..4)
+    UNITS         "samples"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Cyclic shift delay to the transmitted OFDM symbol."
+    ::= { wlanTxDiversity 2 }
+
+--
+-- wlanRxDiversity scalars
+--
+
+wlanRxDiversityEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether RX diversity is enabled."
+    ::= { wlanRxDiversity 1 }
+
+wlanRxDiversityCnt OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "RX diversity counter."
+    ::= { wlanRxDiversity 2 }
+
+--
+-- wlanPhyTable
+--
+
+wlanPhyTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF WlanPhyEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "PHY interfaces configuration table."
+     ::= { wlanPhy 3 }
+
+wlanPhyEntry OBJECT-TYPE
+     SYNTAX        WlanPhyEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "PHY interfaces configuration entry."
+     INDEX         { ifIndex }
+     ::= { wlanPhyTable 1 }
+
+WlanPhyEntry  ::=
+    SEQUENCE {
+        wlanChannelProbingInterval Integer32,
+        wlanChannelLoadThreshold Integer32,
+        wlanChannelBusyRatio Integer32,
+        wlanPhyHeaderErrCnt Counter32 }
+
+wlanChannelProbingInterval OBJECT-TYPE
+    SYNTAX        Integer32 (1..1000)
+    UNITS         "milliseconds"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Channel load probing interval."
+    ::= { wlanPhyEntry 1 }
+
+wlanChannelLoadThreshold OBJECT-TYPE
+    SYNTAX        Integer32 (-95..-35)
+    UNITS         "dBm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Threshold of received signal strength above which the channel will
+        be considered busy."
+    ::= { wlanPhyEntry 2 }
+
+wlanChannelBusyRatio OBJECT-TYPE
+    SYNTAX        Integer32 (0..100)
+    UNITS         "%"
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The percentage of time during which the channel was busy in the last
+        probing interval."
+    ::= { wlanPhyEntry 3 }
+
+wlanPhyHeaderErrCnt OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "This counter shall be incremented for each error in PHY header"
+    ::= { wlanPhyEntry 4 }
+       
+--
+-- wlanRfTable
+--
+
+wlanRfTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF WlanRfEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "RF interfaces table."
+     ::= { wlanRf 1 }
+
+wlanRfEntry OBJECT-TYPE
+     SYNTAX        WlanRfEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "RF interface entry."
+     INDEX         { wlanRfIndex }
+     ::= { wlanRfTable 1 }
+
+WlanRfEntry  ::=
+    SEQUENCE {
+        wlanRfIndex WlanRfIndex,
+        wlanFrequency Integer32,
+        wlanDcocStatus INTEGER,
+        wlanRfFrontEndConnected TruthValue,
+        wlanRfEnabled TruthValue,
+        wlanRfFrontEndOffset Integer32,
+        wlanPhyOFDMChannelWidth INTEGER,
+        wlanPresetFrequency0 Integer32,
+        wlanPresetFrequency1 Integer32,
+        wlanDcocEnabled TruthValue,
+        wlanRssiLatestFrame Integer32,       
+        wlanRficTemperature Integer32,
+        wlanRcpiLatestFrame Integer32,
+        wlanAntennaStatus AntennaStatus }
+
+wlanRfIndex OBJECT-TYPE
+    SYNTAX        WlanRfIndex
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Identifies RF interface."
+    ::= { wlanRfEntry 1 }
+
+wlanFrequency OBJECT-TYPE
+    SYNTAX        Integer32 (740..780 | 5180..5920)
+    UNITS         "MHz"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Current frequency.
+
+        Should not be used when channel switching is enabled."
+    ::= { wlanRfEntry 2 }
+
+wlanDcocStatus OBJECT-TYPE
+    SYNTAX        INTEGER {
+        notStarted(0), inProgress(1), success(2), failure(3) }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Indicates status of DCOC (DC Offset Cancellation) process."
+    ::= { wlanRfEntry 3 }
+
+wlanRfFrontEndConnected OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether an external RF front-end is connected."
+    ::= { wlanRfEntry 4 }
+
+wlanRfEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether RF interface is enabled. Once an interface has been
+        disabled, it can only be re-enabled by rebooting the unit."
+    ::= { wlanRfEntry 5 }
+
+wlanRfFrontEndOffset OBJECT-TYPE
+    SYNTAX        Integer32 (0..30)
+    UNITS         "dBm"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Attenuation of the first transmitted frame's output power.
+        Relevant only when a RF front-end is used."
+    ::= { wlanRfEntry 6 }
+
+wlanPhyOFDMChannelWidth OBJECT-TYPE
+   SYNTAX         INTEGER { width10MHz(1), width20MHz(2) }
+   MAX-ACCESS     read-write
+   STATUS         current
+   DESCRIPTION
+       "Current PHY OFDM channel width."
+   ::= { wlanRfEntry 7 }
+
+wlanPresetFrequency0 OBJECT-TYPE
+    SYNTAX        Integer32 (5180..5930)
+    UNITS         "MHz"
+    MAX-ACCESS    read-write
+    STATUS        deprecated
+    DESCRIPTION
+        "Preset frequency 0.
+
+        Should not be used when channel switching is enabled."
+    ::= { wlanRfEntry 8 }
+
+wlanPresetFrequency1 OBJECT-TYPE
+    SYNTAX        Integer32 (5180..5930)
+    UNITS         "MHz"
+    MAX-ACCESS    read-write
+    STATUS        deprecated
+    DESCRIPTION
+        "Preset frequency 1.
+
+        Should not be used when channel switching is enabled."
+    ::= { wlanRfEntry 9 }
+
+wlanDcocEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether periodic DCOC is enabled."
+    ::= { wlanRfEntry 10 }
+
+wlanRssiLatestFrame OBJECT-TYPE
+    SYNTAX        Integer32
+    UNITS         "dBm"
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "RSSI of latest frame received at PHY."
+    ::= { wlanRfEntry 11 }
+
+wlanRficTemperature  OBJECT-TYPE
+    SYNTAX Integer32 (-200..200)
+    UNITS         "degrees Celsius"
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "RFIC temperature."
+    ::= { wlanRfEntry 12 }
+
+wlanRcpiLatestFrame OBJECT-TYPE
+    SYNTAX        Integer32 (0..255)
+    UNITS         "dBm"
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "RCPI of latest frame received at PHY."
+    ::= { wlanRfEntry 13 }
+
+wlanAntennaStatus OBJECT-TYPE
+    SYNTAX        AntennaStatus
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Current status of WLAN (DSRC) antenna."
+    ::= { wlanRfEntry 14 }
+
+--
+-- wlanRfTestTable
+--
+
+wlanRfTestTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF WlanRfTestEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "RF interfaces test table, augments wlanRfTable."
+     ::= { wlanRf 2 }
+
+wlanRfTestEntry OBJECT-TYPE
+     SYNTAX        WlanRfTestEntry
+     MAX-ACCESS    not-accessible
+     STATUS        current
+     DESCRIPTION
+         "RF interface test entry."
+     AUGMENTS        { wlanRfEntry }
+     ::= { wlanRfTestTable 1 }
+
+WlanRfTestEntry  ::=
+     SEQUENCE {
+         wlanRfTestMode  INTEGER }
+
+wlanRfTestMode OBJECT-TYPE
+    SYNTAX        INTEGER  { off(0), random(1) }
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "RF interface test mode."
+    ::= { wlanRfTestEntry 3 }
+
+--
+-- wlanRfCalibration
+--
+
+wlanRfCalibration OBJECT IDENTIFIER ::= { wlanRf 3 }
+
+wlanRfCalibrationTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF WlanRfCalibrationEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "WLAN RF calibration table."
+    ::= { wlanRfCalibration 1 }
+
+wlanRfCalibrationEntry OBJECT-TYPE
+    SYNTAX        WlanRfCalibrationEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "WLAN RF calibration table entry."
+    INDEX         { wlanRfIndex }
+    ::= { wlanRfCalibrationTable 1 }
+
+WlanRfCalibrationEntry  ::=
+    SEQUENCE {
+        wlanTssiPintercept Integer32,
+        wlanTssiPslope Integer32,
+        wlanTssiInterval Integer32,
+        wlanRxSampleGainLow Integer32,
+        wlanRxSampleGainMid Integer32,
+        wlanRxSampleGainHigh Integer32,
+        wlanGrfiSignalDelayResolution Integer32,
+        wlanRxIqImbalanceAmplitude Integer32,
+        wlanRxIqImbalancePhase Integer32,
+        wlanTxIqImbalanceAmplitude Integer32,
+        wlanTxIqImbalancePhase Integer32,
+        wlanPantLutIndex Integer32,
+        wlanTssiDetectorReading Integer32,
+        wlanRfCalibrationRequired TruthValue }
+
+wlanTssiPintercept OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-write
+    STATUS        obsolete
+    DESCRIPTION
+        "Intercept of the line equation used to evaluate output power."
+    ::= { wlanRfCalibrationEntry 1 }
+
+wlanTssiPslope OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-write
+    STATUS        obsolete
+    DESCRIPTION
+        "Slope of the line equation used to evaluate output power."
+    ::= { wlanRfCalibrationEntry 2 }
+
+wlanTssiInterval OBJECT-TYPE
+    SYNTAX        Integer32
+    UNITS         "sec"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "TSSI sampling interval."
+    ::= { wlanRfCalibrationEntry 3 }
+
+wlanRxSampleGainLow OBJECT-TYPE
+    SYNTAX        Integer32 (-1280..1270)
+    UNITS         "0.1 dB"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Low-range input power gain correction factor."
+    ::= { wlanRfCalibrationEntry 4 }
+
+wlanRxSampleGainMid OBJECT-TYPE
+    SYNTAX        Integer32 (-1280..1270)
+    UNITS         "0.1 dB"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Mid-range input power gain correction factor."
+    ::= { wlanRfCalibrationEntry 5 }
+
+wlanRxSampleGainHigh OBJECT-TYPE
+    SYNTAX        Integer32 (-1280..1270)
+    UNITS         "0.1 dB"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "High-range input power gain correction factor."
+    ::= { wlanRfCalibrationEntry 6 }
+
+wlanGrfiSignalDelayResolution OBJECT-TYPE
+    SYNTAX        Integer32 (0..256)
+    UNITS         "0.1 usec"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Timing resolution of the delay between transmitted packets to PA
+        and T/R RF switch."
+    ::= { wlanRfCalibrationEntry 7 }
+
+wlanRxIqImbalanceAmplitude OBJECT-TYPE
+    SYNTAX        Integer32 (-60..60)
+    UNITS         "0.1 dB"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Received signal I/Q imbalance amplitude correction factor."
+    ::= { wlanRfCalibrationEntry 8 }
+
+wlanRxIqImbalancePhase OBJECT-TYPE
+    SYNTAX        Integer32 (-100..100)
+    UNITS         "0.1 degree"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Received signal I/Q imbalance phase correction factor."
+    ::= { wlanRfCalibrationEntry 9 }
+
+wlanTxIqImbalanceAmplitude OBJECT-TYPE
+    SYNTAX        Integer32 (-60..60)
+    UNITS         "0.1 dB"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Transmitted signal I/Q imbalance amplitude correction factor."
+    ::= { wlanRfCalibrationEntry 10 }
+
+wlanTxIqImbalancePhase OBJECT-TYPE
+    SYNTAX        Integer32 (-100..100)
+    UNITS         "0.1 degree"
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Transmitted signal I/Q imbalance phase correction factor."
+    ::= { wlanRfCalibrationEntry 11 }
+
+wlanPantLutIndex OBJECT-TYPE
+    SYNTAX        Integer32 (0..4)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Which power antenna LUT entry is used.
+
+        Index 0 denotes the defaut power antenna LUT. Index 1-4 denotes one
+        of four power antenna LUTs defined at wlanPantLutDbm8Table."
+    ::= { wlanRfCalibrationEntry 12 }
+
+wlanTssiDetectorReading OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "ADC TSSI feedback detector reading."
+    ::= { wlanRfCalibrationEntry 13 }
+
+wlanRfCalibrationRequired OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether calibration is required on next system boot."
+    ::= { wlanRfCalibrationEntry 14 }
+
+---
+--- wlanPantLutTable
+---
+
+wlanPantLutTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF WlanPantLutEntry
+    MAX-ACCESS    not-accessible
+    STATUS        deprecated
+    DESCRIPTION
+        "WLAN RF power antenna LUT table."
+    ::= { wlanRfCalibration 2 }
+
+wlanPantLutEntry OBJECT-TYPE
+    SYNTAX        WlanPantLutEntry
+    MAX-ACCESS    not-accessible
+    STATUS        deprecated
+    DESCRIPTION
+        "WLAN RF power antenna LUT entry."
+    INDEX         { wlanRfIndex }
+    ::= { wlanPantLutTable 1 }
+
+WlanPantLutEntry  ::=
+    SEQUENCE {
+        wlanPantLut WlanPantLut }
+
+wlanPantLut OBJECT-TYPE
+    SYNTAX        WlanPantLut
+    MAX-ACCESS    read-write
+    STATUS        deprecated
+    DESCRIPTION
+        "Lookup table (LUT) for conversion of power detector output
+        into 1 dBm."
+    ::= { wlanPantLutEntry 1 }
+
+--
+-- wlanLoLeakageTable
+--
+
+wlanLoLeakageTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF WlanLoLeakageEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "LO leakage table"
+    ::= { wlanRfCalibration 3 }
+
+wlanLoLeakageEntry OBJECT-TYPE
+    SYNTAX        WlanLoLeakageEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "LO leakage calibration table entry."
+    INDEX         { wlanLoLeakageIndex }
+    ::= { wlanLoLeakageTable 1 }
+
+WlanLoLeakageEntry  ::=
+    SEQUENCE {
+        wlanLoLeakageIndex WlanLoLeakageIndex,
+        wlanLoLeakage Integer32 }
+
+wlanLoLeakageIndex OBJECT-TYPE
+    SYNTAX        WlanLoLeakageIndex
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Identifies row of wlanLoLeakageTable."
+    ::= { wlanLoLeakageEntry 1 }
+
+
+wlanLoLeakage OBJECT-TYPE
+    SYNTAX        Integer32 (0..65535)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "LO leakage cancellation per gain."
+    ::= { wlanLoLeakageEntry 2 }
+
+---
+--- wlanPantLutDbm8Table
+---
+
+wlanPantLutDbm8Table OBJECT-TYPE
+    SYNTAX SEQUENCE OF WlanPantLutDbm8Entry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "RF power antenna LUT Dbm8 table."
+    ::= { wlanRfCalibration 4 }
+
+wlanPantLutDbm8Entry OBJECT-TYPE
+    SYNTAX        WlanPantLutDbm8Entry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "RF power antenna LUT entry."
+    INDEX         { wlanPantLutDbm8Index }
+    ::= { wlanPantLutDbm8Table 1 }
+
+WlanPantLutDbm8Entry  ::=
+    SEQUENCE {
+		wlanPantLutDbm8Index WlanPantLutDbm8Index,
+        wlanPantLutDbm8 Integer32 }
+
+wlanPantLutDbm8Index OBJECT-TYPE
+    SYNTAX        WlanPantLutDbm8Index
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Identifies element in LutDbm8."
+    ::= { wlanPantLutDbm8Entry 1 }
+
+wlanPantLutDbm8 OBJECT-TYPE
+    SYNTAX        Integer32  (-240..320)
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Conversion factor of power detector output into 1/8 dBm LUT."
+    ::= { wlanPantLutDbm8Entry 2 }
+
+--
+-- Conformance
+--
+
+wlanConformance OBJECT IDENTIFIER ::= { wlanMib 1 }
+wlanGroups      OBJECT IDENTIFIER ::= { wlanConformance 1 }
+wlanCompliances OBJECT IDENTIFIER ::= { wlanConformance 2 }
+
+wlanCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "Compliance statement covering entire AUTOTALKS-WLAN-MIB."
+    MODULE
+        MANDATORY-GROUPS { wlanMibGroup, wlanPlutonMibGroup }
+    ::= { wlanCompliances 1 }
+
+wlanMibGroup OBJECT-GROUP
+    OBJECTS {
+        wlanDefaultTxDataRate,
+        wlanDefaultTxPower,
+        wlanRandomBackoffEnabled,
+        wlanMacAddress,
+        wlanFrameTxCnt,
+        wlanFrameRxCnt,
+        wlanTxFailCnt,
+        wlanTxAllocFailCnt,
+        wlanTxQueueFailCnt,
+        wlanRxFailCnt,
+        wlanRxAllocFailCnt,
+        wlanRxQueueFailCnt,
+        wlanRxDuplicateFrameFilteringEnabled,
+        wlanTxDiversityEnabled,
+        wlanTxCsd,
+        wlanRxDiversityEnabled,
+        wlanRxDiversityCnt,
+        wlanChannelProbingInterval,
+        wlanChannelLoadThreshold,
+        wlanChannelBusyRatio,
+        wlanPhyHeaderErrCnt,
+        wlanFrequency,
+        wlanDcocStatus,
+        wlanRfFrontEndConnected,
+        wlanRfEnabled,
+        wlanRfFrontEndOffset,
+        wlanPhyOFDMChannelWidth,
+        wlanRfTestMode,
+        wlanConfigSaveStatus,
+        wlanRssiLatestFrame,
+        wlanRficTemperature,
+        wlanRcpiLatestFrame,
+        wlanAntennaStatus,
+        wlanTxSaOverrideEnabled,
+        wlanRxUcastDaFilterEnabled,
+        wlanShortRetryLimit,
+        wlanDefaultTxPowerDbm8,
+        wlanQosDataEnabled,
+        wlanBssid,
+        wlanEdcaCWmin,
+        wlanEdcaCWmax,
+        wlanCsRowStatus,
+        wlanCsFrequencyA,
+        wlanCsFrequencyB,
+        wlanCsIntervalA,
+        wlanCsIntervalB,
+        wlanCsSyncTolerance,
+        wlanCsIfIndexB }
+    STATUS current
+    DESCRIPTION
+        "RFIC-independent WLAN management objects."
+    ::= { wlanGroups 1 }
+
+wlanPlutonMibGroup OBJECT-GROUP
+    OBJECTS {
+        wlanTssiPintercept,
+        wlanTssiPslope,
+        wlanTssiInterval,
+        wlanRxSampleGainLow,
+        wlanRxSampleGainMid,
+        wlanRxSampleGainHigh,
+        wlanGrfiSignalDelayResolution,
+        wlanRxIqImbalanceAmplitude,
+        wlanRxIqImbalancePhase,
+        wlanTxIqImbalanceAmplitude,
+        wlanTxIqImbalancePhase,
+        wlanPresetFrequency0,
+        wlanPresetFrequency1,
+        wlanDcocEnabled,
+        wlanPantLutIndex,
+        wlanTssiDetectorReading,
+        wlanRfCalibrationRequired,
+        wlanPantLut,
+        wlanLoLeakage,
+        wlanPantLutDbm8 }
+    STATUS current
+    DESCRIPTION
+        "PLUTON RFIC-specific WLAN management objects."
+    ::= { wlanGroups 2 }
+
+END

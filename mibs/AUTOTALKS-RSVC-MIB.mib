@@ -1,0 +1,206 @@
+AUTOTALKS-RSVC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    RowStatus, TruthValue, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    InetPortNumber, InetAddressIPv4
+        FROM INET-ADDRESS-MIB
+    InterfaceIndex
+        FROM IF-MIB
+    VlanId
+        FROM Q-BRIDGE-MIB
+    atlkMgmt
+        FROM AUTOTALKS-REG
+    LinkProtocolId
+        FROM AUTOTALKS-TC
+;
+
+rsvcMib MODULE-IDENTITY
+    LAST-UPDATED "201606050000Z"
+    ORGANIZATION "Autotalks"
+    CONTACT-INFO "Grand Netter Building
+                  POB 3846, Kfar-Netter 40593, Israel
+                  Phone: (+972)-9-886-5300
+                  Fax:   (+972)-9-886-5301
+                  info@auto-talks.com"
+    DESCRIPTION  "Autotalks Remote Services MIB."
+    REVISION     "201606050000Z"
+    DESCRIPTION  "Added rsvcWlanBridgeEnabled, rsvcWlanBridgeIfIndex and
+                  rsvcWlanBridgeVlanId attributes."
+    REVISION     "201507060000Z"
+    DESCRIPTION  "Initial revision."
+    ::= { atlkMgmt 7 }
+
+--
+-- Textual Conventions
+--
+
+RsvcObjIndex ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT  "d"
+    STATUS        current
+    DESCRIPTION
+        "A unique value, greater than zero, for each Remote Services object."
+    SYNTAX        Integer32 (1..65535)
+
+--
+-- Objects
+--
+
+rsvcSmt          OBJECT IDENTIFIER ::= { rsvcMib 2 }
+rsvcWlan         OBJECT IDENTIFIER ::= { rsvcMib 3 }
+
+--
+-- Remote Services Station Management objects
+--
+
+rsvcDefaultDestIpAddressIPv4 OBJECT-TYPE
+    SYNTAX        InetAddressIPv4
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Default destination IPv4 address for Remote Services messages."
+    ::= { rsvcSmt 1 }
+
+--
+-- WLAN Remote Service objects
+--
+
+rsvcWlanFwdTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RsvcWlanFwdEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "WLAN packet forwarding table."
+    ::= { rsvcWlan 2 }
+
+rsvcWlanFwdEntry OBJECT-TYPE
+    SYNTAX        RsvcWlanFwdEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "WLAN packet forwarding entry."
+    INDEX         { rsvcWlanFwdIndex }
+    ::= { rsvcWlanFwdTable 1 }
+
+RsvcWlanFwdEntry ::=
+    SEQUENCE {
+        rsvcWlanFwdIndex RsvcObjIndex,
+        rsvcWlanFwdRowStatus RowStatus,
+        rsvcWlanFwdDestPortNumber InetPortNumber,
+        rsvcWlanFwdIfIndex InterfaceIndex,
+        rsvcWlanFwdFrameType INTEGER,
+        rsvcWlanFwdProtocolId LinkProtocolId
+    }
+
+rsvcWlanFwdIndex OBJECT-TYPE
+    SYNTAX        RsvcObjIndex
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Identifies row of WLAN packet forwarding table."
+    ::= { rsvcWlanFwdEntry 1 }
+
+rsvcWlanFwdRowStatus OBJECT-TYPE
+    SYNTAX        RowStatus
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "WLAN packet forwarding conceptual row status."
+    ::= { rsvcWlanFwdEntry 2 }
+
+rsvcWlanFwdDestPortNumber OBJECT-TYPE
+    SYNTAX        InetPortNumber
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Destination port for forwarded WLAN packets."
+    ::= { rsvcWlanFwdEntry 3 }
+
+rsvcWlanFwdIfIndex OBJECT-TYPE
+    SYNTAX        InterfaceIndex
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "WLAN MAC interface index."
+    ::= { rsvcWlanFwdEntry 4 }
+
+rsvcWlanFwdFrameType OBJECT-TYPE
+    SYNTAX        INTEGER { data(0), vsa(1) }
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "WLAN frame type."
+    ::= { rsvcWlanFwdEntry 5 }
+
+rsvcWlanFwdProtocolId OBJECT-TYPE
+    SYNTAX        LinkProtocolId
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "WLAN packet protocol ID."
+    ::= { rsvcWlanFwdEntry 6 }
+
+rsvcWlanBridge OBJECT IDENTIFIER ::= { rsvcWlan 3 }
+
+rsvcWlanBridgeEnabled OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Whether bridging of WLAN to local VLAN is enabled."
+    ::= { rsvcWlanBridge 1 }
+
+rsvcWlanBridgeIfIndex OBJECT-TYPE
+    SYNTAX        InterfaceIndex
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "WLAN interface index that's bridged to a local VLAN ID."
+    ::= { rsvcWlanBridge 2 }
+
+rsvcWlanBridgeVlanId OBJECT-TYPE
+    SYNTAX        VlanId
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "VLAN ID of the VLAN that's bridged to WLAN interface selected by
+        rsvcWlanBridgeIfIndex."
+    ::= { rsvcWlanBridge 3 }
+
+--
+-- Conformance
+--
+
+rsvcConformance OBJECT IDENTIFIER ::= { rsvcMib 1 }
+rsvcGroups      OBJECT IDENTIFIER ::= { rsvcConformance 1 }
+rsvcCompliances OBJECT IDENTIFIER ::= { rsvcConformance 2 }
+
+rsvcCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "Compliance statement covering entire AUTOTALKS-RSVC-MIB."
+    MODULE
+        MANDATORY-GROUPS { rsvcMibGroup }
+    ::= { rsvcCompliances 1 }
+
+rsvcMibGroup OBJECT-GROUP
+    OBJECTS {
+        rsvcDefaultDestIpAddressIPv4,
+        rsvcWlanFwdRowStatus,
+        rsvcWlanFwdDestPortNumber,
+        rsvcWlanFwdIfIndex,
+        rsvcWlanFwdFrameType,
+        rsvcWlanFwdProtocolId,
+        rsvcWlanBridgeEnabled,
+        rsvcWlanBridgeIfIndex,
+        rsvcWlanBridgeVlanId }
+    STATUS current
+    DESCRIPTION
+        "Remote services management objects."
+    ::= { rsvcGroups 1 }
+
+END

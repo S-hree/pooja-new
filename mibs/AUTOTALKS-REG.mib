@@ -1,0 +1,38 @@
+AUTOTALKS-REG DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, enterprises
+        FROM SNMPv2-SMI
+;
+
+autotalks MODULE-IDENTITY
+    LAST-UPDATED "201508030000Z"
+    ORGANIZATION "Autotalks"
+    CONTACT-INFO "Grand Netter Building
+                  POB 3846, Kfar-Netter 40593, Israel
+                  Phone: (+972)-9-886-5300
+                  Fax:   (+972)-9-886-5301
+                  info@auto-talks.com"
+    DESCRIPTION  "Autotalks top-level OID registration module."
+    REVISION     "201508030000Z"
+    DESCRIPTION  "Added rsvcMib."
+    REVISION     "201406180000Z"
+    DESCRIPTION  "Added atlkTc."
+    REVISION     "201209030000Z"
+    DESCRIPTION  "Initial revision."
+    ::= { enterprises 38405 }
+
+-- Autotalks management information modules
+atlkMgmt          OBJECT IDENTIFIER ::= { autotalks 1 }
+-- wlanMib        OBJECT IDENTIFIER ::= { atlkMgmt 1 }
+-- t109Mib        OBJECT IDENTIFIER ::= { atlkMgmt 2 }
+-- en302Mib       OBJECT IDENTIFIER ::= { atlkMgmt 3 }
+-- j2735Mib       OBJECT IDENTIFIER ::= { atlkMgmt 4 }
+-- vcaMib         OBJECT IDENTIFIER ::= { atlkMgmt 5 }
+-- navMib         OBJECT IDENTIFIER ::= { atlkMgmt 6 }
+-- rsvcMib        OBJECT IDENTIFIER ::= { atlkMgmt 7 }
+
+-- Autotalks textual conventions module
+-- atlkTc         OBJECT IDENTIFIER ::= { autotalks 2 }
+
+END

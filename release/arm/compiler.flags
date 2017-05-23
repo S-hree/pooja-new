@@ -1,0 +1,10 @@
+-D__CRATON__=1
+-D__THREADX__=1
+-fshort-enums
+-fpack-struct=4
+-D__CRATON_ARM=1
+-mthumb
+-march=armv7-r
+-mfloat-abi=hard
+-mfpu=vfpv3-d16
+-D__CRATON_NO_ARC=1
