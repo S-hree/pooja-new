@@ -1,0 +1,68 @@
+#!/bin/bash
+
+function help() {
+	cat <<EOF
+Usage: $0 [OPTION]... INPUT OUTPUT
+
+Convert flat executable image (e.g. output of "arm-none-eabi-objcopy -O binary";
+not an ELF file!) to U-Boot format firmware image that can be run on a CRATON
+engineering sample chip.
+
+    INPUT          ARM flat executable image
+    OUTPUT         uImage file to be created
+
+Options:
+    -n, --name     Image name (default: basename of INPUT)
+    -e, --entry    Entry point address (default: 0x50000000)
+EOF
+}
+
+args=()
+
+while [ -n "$1" ]; do
+    case "$1" in
+	-h|--help)
+	    help
+	    exit 0
+	    ;;
+        -n|--name)
+	    shift
+	    name="$1"
+	    ;;
+        -e|--entry)
+	    shift
+	    entry="$1"
+	    ;;
+	-*)
+	    echo "$0: Unrecognized option $1 (try --help)"
+	    exit 2
+	    ;;
+	*)
+	    args+=("$1")
+	    ;;
+    esac
+    shift
+done
+
+if [ ${#args[@]} -ne 2 ]; then
+    echo "$0: 2 arguments are required, ${#args[@]} were provided (try --help)"
+    exit 2
+fi
+
+input=${args[0]}
+output=${args[1]}
+
+if [ -z "$name" ]; then
+    basename=${input##*/}
+    name=${basename%.*}
+fi
+
+if [ -z "$entry" ]; then
+    entry=0x50000000
+fi
+
+prog_dir=${0%/*}
+
+flags="-A arm -O rtos -T kernel -C none -e ${entry} -a ${entry}"
+
+exec $prog_dir/u-boot-mkimage $flags -n "$name" -d "$input" "$output"
