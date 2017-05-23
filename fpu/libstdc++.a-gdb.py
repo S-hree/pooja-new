@@ -20,7 +20,7 @@ import os
 import os.path
 
 pythondir = '/tmp/jenkins/workspace/craton-arm-toolchain/output/gcc-arm-none-eabi-4_8-2014q3-20140805/install-native/share/gcc-arm-none-eabi'
-libdir = '/tmp/jenkins/workspace/craton-arm-toolchain/output/gcc-arm-none-eabi-4_8-2014q3-20140805/install-native/arm-none-eabi/lib/armv7e-m/fpu'
+libdir = '/tmp/jenkins/workspace/craton-arm-toolchain/output/gcc-arm-none-eabi-4_8-2014q3-20140805/install-native/arm-none-eabi/lib/fpu'
 
 # This file might be loaded when there is no current objfile.  This
 # can happen if the user loads it manually.  In this case we don't
